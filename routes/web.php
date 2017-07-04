@@ -16,5 +16,5 @@ Route::get('/', function () {
 });
 
 Route::group(['prefix' => 'service/{service}'], function () {
-    Route::get('bank/{bank}', ['as' => 'exchange.rate','uses' => 'WebCrawlRate@response']);
+    Route::get('bank/{bank}/{type?}', ['as' => 'exchange.rate','uses' => 'WebCrawlRate@response']);
 });
