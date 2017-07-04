@@ -13,7 +13,8 @@ class WebCrawlRate extends Controller
     public function response($service, $bank, $type = 'sell')
     {
         if($service == 'exrate') {
-            return $this->$bank($type);
+            $bankname = strolower($bank);
+            return $this->$bankname($type);
         }
     }
 
