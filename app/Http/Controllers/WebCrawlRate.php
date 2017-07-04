@@ -19,7 +19,13 @@ class WebCrawlRate extends Controller
 
     private function cbm($type) {
         $content = file_get_contents('http://forex.cbm.gov.mm/api/latest');
-        return Response::json(json_decode($content));
+        $base_info = [
+            'status' => 'Success',
+            'type' => 'CBM'
+        ];
+        $cbm_rate = json_decode($content, true);
+        $response = array_merge($base_info, $cbm_rate);
+        return Response::json($response);
     }
 
     private function kbz($type) {
@@ -71,9 +77,10 @@ class WebCrawlRate extends Controller
 
         $base_info = [
             'status' => 'Success',
+            'type' => strtoupper($type),
             'info' => 'KBZ Bank Exchange Rate',
-            'description' => 'KBZ Bank Exchange Rate',
-            'timestamp' => $exrate[0]['timestamp']
+            'description' => 'KBZ Bank Exchange Rate extracted from kbzbank.com',
+            'timestamp' => strtotime($exrate[0]['timestamp'])
         ];
 
         $sell_rates = [];
@@ -83,14 +90,14 @@ class WebCrawlRate extends Controller
         $sell = array_column($exrate,'sell');
         foreach ($sell as $rates) {
             foreach($rates as $currency => $rate) {
-                $sell_rates[$currency] = $rate;
+                $sell_rates['rates'][$currency] = $rate;
             }
         }
 
         $buy = array_column($exrate,'buy');
         foreach ($buy as $rates) {
             foreach($rates as $currency => $rate) {
-                $buy_rates[$currency] = $rate;
+                $buy_rates['rates'][$currency] = $rate;
             }
         }
 
@@ -105,7 +112,8 @@ class WebCrawlRate extends Controller
         $client = new Client();
         $crawler = $client->request('GET', 'http://www.ayabank.com/en_US/');
         $timestamp = $crawler->filter('tr.row-1 td.column-1')->text();
-        $timestamp = strtotime(preg_replace('/[^0-9a-zA-Z]\s+/S', " ", $timestamp));
+
+        $timestamp = strtotime(preg_replace('/[^0-9a-zA-Z:]\s?/s', " ", $timestamp));
 
         $usdbuy = $crawler->filter('tr.row-2 td.column-2')->text();
         $usdsell = $crawler->filter('tr.row-2 td.column-3')->text();
@@ -117,8 +125,9 @@ class WebCrawlRate extends Controller
         $sgdsell = $crawler->filter('tr.row-4 td.column-3')->text();
         $base_info = [
             'status' => 'Success',
+            'type' => strtoupper($type),
             'info' => 'Aya Bank Exchange Rate',
-            'description' => 'Aya Bank Exchange Rate',
+            'description' => 'Aya Bank Exchange Rate extracted from ayabank.com',
             'timestamp' => $timestamp
         ];
 
@@ -143,8 +152,9 @@ class WebCrawlRate extends Controller
         $agdrates = json_decode(substr($content, 2, -2));
         $base_info = [
             'status' => 'Success',
+            'type' => strtoupper($type),
             'info' => 'AGD Bank Exchange Rate',
-            'description' => 'AGD Bank Exchange Rate',
+            'description' => 'AGD Bank Exchange Rate extracted from agdbank.com.mm',
             'timestamp' => false
         ];
 
@@ -185,8 +195,9 @@ class WebCrawlRate extends Controller
 
         $base_info = [
             'status' => 'Success',
+            'type' => strtoupper($type),
             'info' => 'CB Bank Exchange Rate',
-            'description' => 'CB Bank Exchange Rate',
+            'description' => 'CB Bank Exchange Rate extracted from cbbank.com.mm',
             'timestamp' => $timestamp
         ];
 
