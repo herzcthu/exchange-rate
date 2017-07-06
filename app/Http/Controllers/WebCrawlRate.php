@@ -29,6 +29,61 @@ class WebCrawlRate extends Controller
         return Response::json($response);
     }
 
+    private function mcb($type) {
+        $client = new Client();
+        $crawler = $client->request('GET', 'http://www.mcb.com.mm/');
+        $timestamp = $crawler->filter('tr:nth-child(1)')->text();
+
+        preg_match('/([0-9]{1,2})[^0-9]*([0-9]{1,2})[^0-9]*([0-9]{4})[^0-9]*/', $timestamp, $matches);
+
+        $date = sprintf('%02d', $matches[1]);
+        $month =  sprintf('%02d', $matches[2]);
+        $year =  sprintf('%02d', $matches[3]);
+
+        $timestamp = $date.'-'.$month.'-'.$year;
+
+        $timestamp = strtotime($timestamp);
+
+        $usdbuy = $crawler->filter('tr:nth-child(3) td:nth-child(2)')->text();
+
+        $usdsell = $crawler->filter('tr:nth-child(3) td:nth-child(3)')->text();
+
+        $eubuy = $crawler->filter('tr:nth-child(4) td:nth-child(2)')->text();
+        $eusell = $crawler->filter('tr:nth-child(4) td:nth-child(3)')->text();
+
+        $sgdbuy = $crawler->filter('tr:nth-child(5) td:nth-child(2)')->text();
+        $sgdsell = $crawler->filter('tr:nth-child(5) td:nth-child(3)')->text();
+
+        $myrbuy = $crawler->filter('tr:nth-child(6) td:nth-child(2)')->text();
+        $myrsell = $crawler->filter('tr:nth-child(6) td:nth-child(3)')->text();
+
+        $base_info = [
+            'status' => 'Success',
+            'type' => strtoupper($type),
+            'info' => 'Myanmar Citizen Bank Exchange Rate',
+            'description' => 'Myanmar Citizen Bank Exchange Rate extracted from ayabank.com',
+            'timestamp' => $timestamp
+        ];
+
+        $sell_rates['rates'] = [
+            'USD' => $usdsell,
+            'EUR' => $eusell,
+            'SGD' => $sgdsell,
+            'MYR' => $myrsell
+        ];
+
+        $buy_rates['rates'] = [
+            'USD' => $usdbuy,
+            'EUR' => $eubuy,
+            'SGD' => $sgdbuy,
+            'MYR' => $myrbuy
+        ];
+        $rate = $type.'_rates';
+        $response = array_merge($base_info, $$rate);
+        return Response::json($response);
+
+    }
+
     private function kbz($type) {
         $client = new Client();
         $crawler = $client->request('GET', 'https://www.kbzbank.com/en/');
