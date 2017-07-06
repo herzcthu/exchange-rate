@@ -61,7 +61,7 @@ class WebCrawlRate extends Controller
             'status' => 'Success',
             'type' => strtoupper($type),
             'info' => 'Myanmar Citizen Bank Exchange Rate',
-            'description' => 'Myanmar Citizen Bank Exchange Rate extracted from ayabank.com',
+            'description' => 'Myanmar Citizen Bank Exchange Rate extracted from mcb.com.mm',
             'timestamp' => $timestamp
         ];
 
