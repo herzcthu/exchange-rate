@@ -36,7 +36,8 @@ return [
     ],
     'botman' => [
         'facebook_token' => env ('FACEBOOK_TOKEN' , 'default'),
-        'facebook_app_secret' => env( 'FACEBOOK_VERIFY', 'default' ),
+        'facebook_app_secret' => env( 'FACEBOOK_APP_SECRET', 'default' ),
+        'chatbot_verify' => env ('TOKEN_VERIFY', 'default')
     ]
 
 ];
