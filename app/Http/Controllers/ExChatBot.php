@@ -7,21 +7,15 @@ use Mpociot\BotMan\BotMan;
 
 class ExChatBot extends Controller
 {
-    protected $botman;
-
-    public function __construct(BotMan $botMan)
-    {
-        $this->botman = $botMan;
-        $this->botman->verifyServices(config('botman.facebook_app_secret'));
-    }
-
     public function autoreply(Request $request)
     {
-        $this->botman->hears('hello', function (BotMan $bot) {
-            $bot->reply('Hello yourself.');
+        $botman = app('botman');
+        $botman->verifyServices(config('botman.facebook_app_secret'));
+        // Simple respond method
+        $botman->hears('Hello', function (BotMan $bot) {
+            $bot->reply('Hi there :)');
         });
-
-        $this->botman->listen();
+        $botman->listen();
     }
 
 }
