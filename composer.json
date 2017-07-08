@@ -6,9 +6,12 @@
     "type": "project",
     "require": {
         "php": ">=5.6.4",
+        "casperlaitw/laravel-fb-messenger": "^1.4",
         "fabpot/goutte": "^3.2",
+        "herzcthu/exchanges-rates-lib": "dev-master",
         "laravel/framework": "5.4.*",
-        "laravel/tinker": "~1.0"
+        "laravel/tinker": "~1.0",
+        "mpociot/botman": "^1.5"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
