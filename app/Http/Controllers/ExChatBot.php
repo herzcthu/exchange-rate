@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 use Mpociot\BotMan\BotMan;
 use Mpociot\BotMan\BotManFactory;
 
 class ExChatBot extends Controller
 {
-    public function autoreply()
+    public function autoreply(Request $request)
     {
-        Log::info(json_encode(Request::all()));
+        Log::info(json_encode($request->headers->all()));
+        Log::info(json_encode($request->all()));
         $config = config('services.botman');
         $botman = BotManFactory::create($config);
 
