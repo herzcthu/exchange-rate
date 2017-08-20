@@ -35,9 +35,46 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
     'botman' => [
-        'facebook_token' => env ('FACEBOOK_TOKEN' , 'default'),
-        'facebook_app_secret' => env( 'FACEBOOK_APP_SECRET', 'default' ),
-        'chatbot_verify' => env ('TOKEN_VERIFY', '164786ebac481fe8bf0e129031e7916a')
-    ]
+        'hipchat_urls' => [
+            env('HIPCHAT_URL'),
+        ],
+        'microsoft_bot_handle'          => env('MICROSOFT_BOT_HANDLE'),
+        'microsoft_app_id'              => env('MICROSOFT_APP_ID'),
+        'microsoft_app_key'             => env('MICROSOFT_APP_KEY'),
+        'nexmo_key'                     => env('NEXMO_KEY'),
+        'nexmo_secret'                  => env('NEXMO_SECRET'),
+        'slack_token'                   => env('SLACK_TOKEN'),
+        'telegram_token'                => env('TELEGRAM_TOKEN'),
+        'facebook_app_secret' => env('FACEBOOK_APP_SECRET'), // Optional - this is used to verify incoming API calls
+        'facebook_token'                => env('FACEBOOK_TOKEN'),
+        'facebook_start_button_payload' => '',
+        'facebook_persistent_menu'      => [
+            'persistent_menu' => [
+                [
+                    'locale'                  => 'default',
+                    'composer_input_disabled' => 'true',
+                    'call_to_actions'         => [
+                        [
+                            'title'           => 'My Account',
+                            'type'            => 'nested',
+                            'call_to_actions' => [
+                                [
+                                    'title'   => 'Pay Bill',
+                                    'type'    => 'postback',
+                                    'payload' => 'PAYBILL_PAYLOAD',
+                                ],
+                            ],
+                        ],
+                        [
+                            'type'                 => 'web_url',
+                            'title'                => 'Latest News',
+                            'url'                  => 'http://botman.io',
+                            'webview_height_ratio' => 'full',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
 
 ];
