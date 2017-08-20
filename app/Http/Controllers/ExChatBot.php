@@ -11,7 +11,7 @@ class ExChatBot extends Controller
 {
     public function autoreply()
     {
-        Log::info(Request::all()->toJson());
+        Log::info(json_encode(Request::all()));
         $config = config('services.botman');
         $botman = BotManFactory::create($config);
 
