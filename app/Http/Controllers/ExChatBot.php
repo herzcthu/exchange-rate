@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Mpociot\BotMan\BotMan;
 use Mpociot\BotMan\Facebook\Element;
 use Mpociot\BotMan\Facebook\GenericTemplate;
+use Mpociot\BotMan\Facebook\ListTemplate;
 
 class ExChatBot extends Controller
 {
@@ -36,16 +37,18 @@ class ExChatBot extends Controller
             $rates = $this->get_exrate($currency, $bot, $crawlBank);
             $elements = [];
             $currency = strtoupper($currency);
-            foreach($rates[$currency] as $bank => $bank_rates) {
+            foreach($rates as $bank => $bank_rates) {
                 $element = Element::create($currency.' rate for '. $bank);
                 $rates = '';
                 foreach($bank_rates as $type => $rate) {
-                    $rates .= $type. ' : ' .$rate."\n";
+                    $rates .= "\t".$type. ' : ' .$rate."\n";
                 }
                 $element->subtitle($rates);
                 $elements[] = $element;
             }
-            $bot->reply(GenericTemplate::create()
+            $bot->reply(
+                ListTemplate::create()
+                    ->useCompactView()
                     ->addElements($elements)
                 );
         });
@@ -80,7 +83,7 @@ class ExChatBot extends Controller
             $now = Carbon::now();
             $today = $now->format('Y-m-d a');
             $central_bank = $crawlBank->rates( 'cbm');
-            $default_key = array_flip(array_keys($central_bank['rates']));
+            $default_key = array_fill_keys(array_keys($central_bank['rates']), '');
             $banks = ['kbz', 'mcb', 'aya', 'agd', 'cbbank'];
             foreach($banks as $bank) {
                 $sell_rates = $crawlBank->rates($bank, 'sell');
