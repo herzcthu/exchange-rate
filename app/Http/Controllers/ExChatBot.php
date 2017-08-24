@@ -18,19 +18,19 @@ class ExChatBot extends Controller
         $botman = app('botman');
         $botman->verifyServices(env('CHATBOT_TOKEN'));
         // Simple respond method
-        $botman->hears('Hello', function (BotMan $bot) {
-            $user = $bot->userStorage()->get();
-            if($user->has('firstname')) {
-                $bot->reply('Hi there '.$user->getFirstName());
-            } else {
-                $bot->userStorage()->save([
-                    'firstname' => $user->getFirstName()
-                ]);
-            }
+//        $botman->hears('Hello', function (BotMan $bot) {
+//            $user = $bot->userStorage()->get();
+//            if($user->has('firstname')) {
+//                $bot->reply('Hi there '.$user->getFirstName());
+//            } else {
+//                $bot->userStorage()->save([
+//                    'firstname' => $user->getFirstName()
+//                ]);
+//            }
+//
+//        });
 
-        });
-
-        $botman->hears('([usd|USD|sgd|SGD|thb|THB])', function(BotMan $bot, $currency) use ($crawlBank) {
+        $botman->hears('(usd|USD|sgd|SGD|thb|THB)', function(BotMan $bot, $currency) use ($crawlBank) {
             $rates = $this->get_exrate($currency, $bot, $crawlBank);
             $bot->reply($rates);
         });
