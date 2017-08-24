@@ -12,13 +12,26 @@ class ExChatBot extends Controller
     {
         Log::info(json_encode($request->headers->all()));
         Log::info(json_encode($request->all()));
-        $config = config('services.botman');
+
         $botman = app('botman');
+        $botman->verifyServices(env('CHATBOT_TOKEN'));
         // Simple respond method
         $botman->hears('Hello', function (BotMan $bot) {
             $bot->reply('Hi there :)');
         });
+
+        $botman->hears("{name}", function (BotMan $bot, $name) {
+            // Store information for the currently logged in user.
+            // You can also pass a user-id / key as a second parameter.
+//            $bot->userStorage()->save([
+//                'name' => $name
+//            ]);
+
+            $bot->reply($name);
+        });
+
         $botman->listen();
+
     }
 
 }
