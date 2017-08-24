@@ -64,12 +64,11 @@ class ExChatBot extends Controller
             $now = Carbon::now();
             $today = $now->format('Y-m-d a');
             $central_bank = $crawlBank->rates( 'cbm');
-            $cbm_arr = json_decode($central_bank, true);
-            $default_key = array_flip(array_keys($cbm_arr['rates']));
+            $default_key = array_flip(array_keys($central_bank['rates']));
             $banks = ['kbz', 'mcb', 'aya', 'agd', 'cbbank'];
             foreach($banks as $bank) {
-                $sell_rates = json_decode($crawlBank->rates($bank, 'sell'), true);
-                $buy_rates = json_decode($crawlBank->rates($bank, 'buy'), true);
+                $sell_rates = $crawlBank->rates($bank, 'sell');
+                $buy_rates = $crawlBank->rates($bank, 'buy');
                 $sell = array_merge($default_key, $sell_rates['rates']);
                 $buy = array_merge($default_key, $buy_rates['rates']);
                 $bank_rates[$today][$currency][$bank]['sell'] = $sell[$currency];
