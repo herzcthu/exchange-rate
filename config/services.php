@@ -46,7 +46,7 @@ return [
         'slack_token'                   => env('SLACK_TOKEN'),
         'telegram_token'                => env('TELEGRAM_TOKEN'),
         'facebook_app_secret' => env('FACEBOOK_APP_SECRET'), // Optional - this is used to verify incoming API calls
-        'facebook_token'                => env('FACEBOOK_TOKEN'),
+        'facebook_token'                => env('FACEBOOK_PAGE_TOKEN'),
         'facebook_start_button_payload' => '',
         'facebook_persistent_menu'      => [
             'persistent_menu' => [
