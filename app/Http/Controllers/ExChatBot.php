@@ -7,6 +7,8 @@ use Herzcthu\ExchangeRates\CrawlBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Mpociot\BotMan\BotMan;
+use Mpociot\BotMan\Facebook\Element;
+use Mpociot\BotMan\Facebook\GenericTemplate;
 
 class ExChatBot extends Controller
 {
@@ -32,7 +34,20 @@ class ExChatBot extends Controller
 
         $botman->hears('(usd|USD|sgd|SGD|thb|THB)', function(BotMan $bot, $currency) use ($crawlBank) {
             $rates = $this->get_exrate($currency, $bot, $crawlBank);
-            $bot->reply($rates);
+            $elements = [];
+            $currency = strtoupper($currency);
+            foreach($rates[$currency] as $bank => $bank_rates) {
+                $element = Element::create($currency.' rate for '. $bank);
+                $rates = '';
+                foreach($bank_rates as $type => $rate) {
+                    $rates .= $type. ' : ' .$rate."\n";
+                }
+                $element->subtitle($rates);
+                $elements[] = $element;
+            }
+            $bot->reply(GenericTemplate::create()
+                    ->addElements($elements)
+                );
         });
 
         $botman->hears('Who am I', function(BotMan $bot) {
@@ -61,6 +76,7 @@ class ExChatBot extends Controller
     }
 
     protected function get_exrate($currency, BotMan $bot, CrawlBank $crawlBank) {
+            $currency = strtoupper($currency);
             $now = Carbon::now();
             $today = $now->format('Y-m-d a');
             $central_bank = $crawlBank->rates( 'cbm');
