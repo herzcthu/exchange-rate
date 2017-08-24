@@ -47,8 +47,7 @@ class ExChatBot extends Controller
                 $elements[] = $element;
             }
             $bot->reply(
-                ListTemplate::create()
-                    ->useCompactView()
+                GenericTemplate::create()
                     ->addElements($elements)
                 );
         });
