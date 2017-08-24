@@ -20,7 +20,7 @@ class ExChatBot extends Controller
             $bot->reply('Hi there :)');
         });
 
-        $botman->hears('Who am I?', function(BotMan $bot) {
+        $botman->hears('Who am I', function(BotMan $bot) {
             $user = $bot->getUser();
             $bot->reply('Hello '.$user->getFirstName().' '.$user->getLastName());
             $bot->reply('Your username is: '.$user->getUsername());
