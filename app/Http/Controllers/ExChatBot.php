@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use Herzcthu\ExchangeRates\CrawlBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Mpociot\BotMan\BotMan;
 
 class ExChatBot extends Controller
 {
-    public function autoreply(Request $request)
+    public function autoreply(Request $request, CrawlBank $crawlBank)
     {
         Log::info(json_encode($request->headers->all()));
         Log::info(json_encode($request->all()));
@@ -17,7 +19,20 @@ class ExChatBot extends Controller
         $botman->verifyServices(env('CHATBOT_TOKEN'));
         // Simple respond method
         $botman->hears('Hello', function (BotMan $bot) {
-            $bot->reply('Hi there :)');
+            $user = $bot->userStorage()->get();
+            if($user->has('firstname')) {
+                $bot->reply('Hi there '.$user->getFirstName());
+            } else {
+                $bot->userStorage()->save([
+                    'firstname' => $user->getFirstName()
+                ]);
+            }
+
+        });
+
+        $botman->hears('([usd|USD|sgd|SGD|thb|THB])', function(BotMan $bot, $currency) use ($crawlBank) {
+            $rates = $this->get_exrate($currency, $bot, $crawlBank);
+            $bot->reply($rates);
         });
 
         $botman->hears('Who am I', function(BotMan $bot) {
@@ -43,6 +58,33 @@ class ExChatBot extends Controller
 
         $botman->listen();
 
+    }
+
+    protected function get_exrate($currency, BotMan $bot, CrawlBank $crawlBank) {
+            $now = Carbon::now();
+            $today = $now->format('Y-m-d a');
+            $central_bank = $crawlBank->getRates( 'cbm');
+            $cbm_arr = json_decode($central_bank, true);
+            $default_key = array_flip(array_keys($cbm_arr['rates']));
+            $banks = ['kbz', 'mcb', 'aya', 'agd', 'cbbank'];
+            foreach($banks as $bank) {
+                $sell_rates = json_decode($crawlBank->getRates($bank, 'sell'), true);
+                $buy_rates = json_decode($crawlBank->getRates($bank, 'buy'), true);
+                $sell = array_merge($default_key, $sell_rates['rates']);
+                $buy = array_merge($default_key, $buy_rates['rates']);
+                $bank_rates[$today][$currency][$bank]['sell'] = $sell[$currency];
+                $bank_rates[$today][$currency][$bank]['buy'] = $buy[$currency];
+            }
+
+            $exrates = $bot->driverStorage()->get();
+
+            if($exrates->has($today)) {
+                $today_rates = $exrates->get($today);
+                return $today_rates[$currency];
+            } else {
+                $bot->driverStorage()->save($bank_rates);
+                return $bank_rates[$today][$currency];
+            }
     }
 
 }
