@@ -81,6 +81,7 @@ class ExChatBot extends Controller
             $currency = strtoupper($currency);
             $now = Carbon::now();
             $today = $now->format('Y-m-d a');
+            $key = $today.$currency;
             $central_bank = $crawlBank->rates( 'cbm');
             $default_key = array_fill_keys(array_keys($central_bank['rates']), '');
             $banks = ['kbz', 'mcb', 'aya', 'agd', 'cbbank'];
@@ -89,13 +90,13 @@ class ExChatBot extends Controller
                 $buy_rates = $crawlBank->rates($bank, 'buy');
                 $sell = array_merge($default_key, $sell_rates['rates']);
                 $buy = array_merge($default_key, $buy_rates['rates']);
-                $bank_rates[$today][$currency][$bank]['sell'] = $sell[$currency];
-                $bank_rates[$today][$currency][$bank]['buy'] = $buy[$currency];
+                $bank_rates[$key][$currency][$bank]['sell'] = $sell[$currency];
+                $bank_rates[$key][$currency][$bank]['buy'] = $buy[$currency];
             }
 
             $exrates = $bot->driverStorage()->get();
 
-            $key = $today.$currency;
+
 
             if($exrates->has($key)) {
                 $today_rates = $exrates->get($key);
