@@ -95,12 +95,14 @@ class ExChatBot extends Controller
 
             $exrates = $bot->driverStorage()->get();
 
-            if($exrates->has($today)) {
-                $today_rates = $exrates->get($today);
+            $key = $today.$currency;
+
+            if($exrates->has($key)) {
+                $today_rates = $exrates->get($key);
                 return $today_rates[$currency];
             } else {
                 $bot->driverStorage()->save($bank_rates);
-                return $bank_rates[$today][$currency];
+                return $bank_rates[$key][$currency];
             }
     }
 
