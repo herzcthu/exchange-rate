@@ -19,4 +19,6 @@ Route::group(['prefix' => 'service/{service}'], function () {
     Route::get('bank/{bank}/{type?}', ['as' => 'exchange.rate','uses' => 'WebCrawlRate@response']);
 });
 
-Route::match(['get','post'],'chatbot', ['as' => 'exchange.chatbot', 'uses' => 'ExChatBot@autoreply'] );
+Route::match(['get', 'post'], '/botman', 'BotManController@handle');
+Route::match(['get','post'],'chatbot', ['as' => 'exchange.chatbot', 'uses' => 'BotManController@facebook_handle'] );
+Route::get('/botman/tinker', 'BotManController@tinker');
