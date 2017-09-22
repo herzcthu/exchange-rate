@@ -43,8 +43,10 @@ class BotManController extends Controller
         $botman->listen();
     }
 
-    public function facebook_handle(CrawlBank $crawlBank)
+    public function facebook_handle(Request $request, CrawlBank $crawlBank)
     {
+        Log::info($request->all());
+        
         $botman = $this->botman;
 
         $botman->hears('(usd|sgd|thb)', function(BotMan $bot, $currency) use ($crawlBank) {
