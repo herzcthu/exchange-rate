@@ -155,18 +155,22 @@ class BotManController extends Controller
             $elements = [];
             $currency = strtoupper($currency);
             foreach ($rates as $bank => $bank_rates) {
-                $element = Element::create($currency . ' rate for ' . $bank);
-                $rates = '';
+                $template = ListTemplate::create();
+
+                $template->useCompactView();
+
                 foreach ($bank_rates as $type => $rate) {
-                    $rates .= "\t" . $type . ' : ' . $rate . "\n";
+                    $rates = "\t" .$currency.'  ('. $type . ')  :  ' . $rate . "\n";
+                    $element = Element::create($rates);
+                    $element->subtitle($bank.'  rate');
+                    $template->addElement($element);
+                    unset($element);
                 }
-                $element->subtitle($rates);
-                $elements[] = $element;
+
+                $bot->reply($template);
+
             }
-            $bot->reply(
-                GenericTemplate::create()
-                    ->addElements($elements)
-            );
+
         });
 
         $botman->hears('(agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $bank) use ($crawlBank) {
