@@ -2,19 +2,30 @@
 
 namespace App\Http\Controllers;
 
+
 use BotMan\BotMan\BotMan;
 use BotMan\Drivers\Facebook\Extensions\Element;
 use BotMan\Drivers\Facebook\Extensions\GenericTemplate;
 use BotMan\Drivers\Facebook\FacebookDriver;
 use Carbon\Carbon;
 use Herzcthu\ExchangeRates\CrawlBank;
-use Illuminate\Http\Request;
 use App\Conversations\ExampleConversation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class BotManController extends Controller
 {
     private $botman;
+
+    private $banks_url = [];
+
+    private $symbol = [
+        'EURO' => '€',
+        'USD' => '$',
+        'THB' => '฿',
+        'SGD' => 'S$',
+    ];
+
     public function __construct()
     {
         $this->botman = app('botman');
@@ -23,9 +34,13 @@ class BotManController extends Controller
     /**
      * Place your BotMan logic here.
      */
-    public function handle(CrawlBank $crawlBank)
+    public function handle(Request $request, CrawlBank $crawlBank)
     {
         $botman = $this->botman;
+        if(config('app.debug')) {
+            Log::info($request->headers->all());
+            Log::info($request->all());
+        }
 
         $botman->hears('(usd|sgd|thb)', function(BotMan $bot, $currency) use ($crawlBank) {
             $rates = $this->get_exrate($currency, $bot, $crawlBank);
@@ -41,19 +56,43 @@ class BotManController extends Controller
             }
         });
 
+        $botman->hears('(cbm|agd|aya|cbbank|mcb|kbz)', function(BotMan $bot, $bank) use ($crawlBank) {
+            $rates = $this->get_bankrate($bank, $bot, $crawlBank);
+            Log::info($rates);
+            $reply = str_replace(' ', '  ',$rates['info']).' ';
+            $exrates = [];
+            foreach ($rates['sell_rates'] as $currency => $rate) {
+                //$exrates[$currency][] = [$currency.' (SELL)' => $rate];
+                $exrates[$this->symbol[$currency].'  '.$currency. '  (SELL)'] = $rate;
+            }
+            foreach ($rates['buy_rates'] as $currency => $rate) {
+                //$exrates[$currency][] = [$currency.' (BUY)' => $rate];
+                $exrates[$this->symbol[$currency].'  '.$currency. '  (BUY)'] = $rate;
+            }
+            $reply_rates = array_sort_recursive($exrates);
+
+            foreach ($reply_rates as $currency => $rate) {
+                $reply .= $currency.'  :  '.$rate."               
+                \n";
+            }
+            $bot->reply($reply);
+        });
+
         $botman->listen();
     }
 
     public function facebook_handle(Request $request, CrawlBank $crawlBank)
     {
-        Log::info($request->headers->all());
-        Log::info($request->all());
+        if(config('app.debug')) {
+            Log::info($request->headers->all());
+            Log::info($request->all());
+        }
         
         $botman = $this->botman;
 
-        $botman->group(['driver' => FacebookDriver::class], function($bot) use ($crawlBank) {
+        //$botman->group(['driver' => FacebookDriver::class], function($bot) use ($crawlBank) {
 
-            $bot->hears('(usd|sgd|thb)', function (BotMan $bot, $currency) use ($crawlBank) {
+            $botman->hears('(usd|sgd|thb)', function (BotMan $bot, $currency) use ($crawlBank) {
                 $rates = $this->get_exrate($currency, $bot, $crawlBank);
                 Log::info($rates);
                 $elements = [];
@@ -72,7 +111,32 @@ class BotManController extends Controller
                         ->addElements($elements)
                 );
             });
+        $botman->hears('(cbm|agd|aya|cbbank|mcb|kbz)', function(BotMan $bot, $bank) use ($crawlBank) {
+            $rates = $this->get_bankrate($bank, $bot, $crawlBank);
+            Log::info($rates);
+            $title = str_replace(' ', '  ',$rates['info']).' ';
+            $reply = '';
+            $exrates = [];
+            foreach ($rates['sell_rates'] as $currency => $rate) {
+                //$exrates[$currency][] = [$currency.' (SELL)' => $rate];
+                $exrates[$this->symbol[$currency].'  '.$currency. '  (SELL)'] = $rate;
+            }
+            foreach ($rates['buy_rates'] as $currency => $rate) {
+                //$exrates[$currency][] = [$currency.' (BUY)' => $rate];
+                $exrates[$this->symbol[$currency].'  '.$currency. '  (BUY)'] = $rate;
+            }
+            $reply_rates = array_sort_recursive($exrates);
+
+            foreach ($reply_rates as $currency => $rate) {
+                $reply .= $currency.'  :  '.$rate."               
+                \n";
+            }
+            $element = Element::create($reply);
+            $element->subtitle($reply);
+            $bot->reply(GenericTemplate::create()
+                ->addElements([$element]));
         });
+        //});
 
         $botman->listen();
     }
@@ -101,10 +165,7 @@ class BotManController extends Controller
         $today = $now->format('Y-m-d a');
         $key = $today.$currency;
 
-
         $exrates = $bot->driverStorage();
-
-
 
         if($exrates->get($key)) {
             $today_rates = $exrates->get($key);
@@ -117,13 +178,34 @@ class BotManController extends Controller
             foreach($banks as $bank) {
                 $sell_rates = $crawlBank->getRatesArr($bank, 'sell');
                 $buy_rates = $crawlBank->getRatesArr($bank, 'buy');
-                $sell = array_merge($default_key, $sell_rates['rates']);
-                $buy = array_merge($default_key, $buy_rates['rates']);
+                $sell = array_merge($default_key, $sell_rates['sell_rates']);
+                $buy = array_merge($default_key, $buy_rates['buy_rates']);
                 $bank_rates[$key][$currency][$bank]['sell'] = $sell[$currency];
                 $bank_rates[$key][$currency][$bank]['buy'] = $buy[$currency];
             }
             $bot->driverStorage()->save($bank_rates);
             return $bank_rates[$key][$currency];
         }
+    }
+
+    protected function get_bankrate($bank, BotMan $bot, CrawlBank $crawlBank) {
+        $bank = strtoupper($bank);
+        $now = Carbon::now();
+        $today = $now->format('Y-m-d a');
+        $key = $today.$bank;
+
+        $exrates = $bot->driverStorage();
+
+        if($exrates->get($key)) {
+            $today_rates = $exrates->get($key);
+            Log::info($today_rates);
+            return $today_rates;
+        } else {
+            $bank_rates[$key] = $crawlBank->getRatesArr($bank);
+            Log::info($bank_rates);
+        }
+
+        $bot->driverStorage()->save($bank_rates);
+        return $bank_rates[$key];
     }
 }

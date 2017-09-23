@@ -13,7 +13,7 @@ class WebCrawlRate extends Controller
      * @param CrawlBank $crawlbank
      * @return mixed JSON
      */
-    public function response($service, $bank, $type = 'sell', CrawlBank $crawlbank)
+    public function response($service, $bank, $type = false, CrawlBank $crawlbank)
     {
         if($service == 'exrate') {
             return $crawlbank->getRates( $bank, $type);
