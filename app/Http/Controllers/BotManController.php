@@ -57,7 +57,7 @@ class BotManController extends Controller
             }
         });
 
-        $botman->hears('(cbm|agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $bank) use ($crawlBank) {
+        $botman->hears('(agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $bank) use ($crawlBank) {
             $rates = $this->get_bankrate($bank, $bot, $crawlBank);
             Log::info($rates);
             $reply = str_replace(' ', '  ', $rates['info']) . ' ';
@@ -77,6 +77,10 @@ class BotManController extends Controller
                 \n";
             }
             $bot->reply($reply);
+        });
+
+        $botman->fallback(function($bot) {
+            $bot->reply('Sorry, I did not understand these commands.');
         });
 
         $botman->listen();
@@ -200,6 +204,10 @@ class BotManController extends Controller
 
         });
         //});
+
+        $botman->fallback(function($bot) {
+            $bot->reply('Sorry, I did not understand these commands.');
+        });
 
         $botman->listen();
     }
