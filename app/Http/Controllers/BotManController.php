@@ -171,25 +171,36 @@ class BotManController extends Controller
             $reply = '';
             $exrates = [];
             foreach ($rates['sell_rates'] as $currency => $rate) {
-                //$exrates[$currency][] = [$currency.' (SELL)' => $rate];
                 $exrates[$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
             }
             foreach ($rates['buy_rates'] as $currency => $rate) {
-                //$exrates[$currency][] = [$currency.' (BUY)' => $rate];
                 $exrates[$this->symbol[$currency] . '  ' . $currency . '  (BUY)'] = $rate;
             }
             $reply_rates = array_sort_recursive($exrates);
 
-            $template = ListTemplate::create();
-            $template->useCompactView();
+
+
+            $i=1;
+
             foreach ($reply_rates as $currency => $rate) {
+
                 $element = Element::create($currency);
+
                 $reply .= $currency . '  :  ' . $rate . "               
                 \n";
+
                 $element->subtitle($reply);
-                $template->addElement($element);
+
+                if($i % 4 == 0) {
+                    $template = ListTemplate::create();
+
+                    $template->useCompactView();
+                    $template->addElement($element);
+                    $bot->reply($template);
+                }
+                $i++;
             }
-            $bot->reply($template);
+
         });
         //});
 
