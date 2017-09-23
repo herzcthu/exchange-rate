@@ -179,18 +179,19 @@ class BotManController extends Controller
             $reply_rates = array_sort_recursive($exrates);
 
             foreach ($reply_rates as $currency => $rates) {
+                $template = ListTemplate::create();
+
+                $template->useCompactView();
 
                 foreach ($rates as $curr => $rate) {
                     $element = Element::create($curr);
                     $reply = $curr . '  :  ' . $rate . "               
                 \n";
                     $element->subtitle($reply);
+                    $template->addElement($element);
+                    unset($element);
                 }
 
-                $template = ListTemplate::create();
-
-                $template->useCompactView();
-                $template->addElement($element);
                 $bot->reply($template);
             }
 
