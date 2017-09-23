@@ -187,6 +187,7 @@ class BotManController extends Controller
                 $reply .= $currency . '  :  ' . $rate . "               
                 \n";
                 $element->subtitle($reply);
+                $template->addElement($element);
             }
             $bot->reply($template);
         });
