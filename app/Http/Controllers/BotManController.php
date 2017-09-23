@@ -171,34 +171,27 @@ class BotManController extends Controller
             $reply = '';
             $exrates = [];
             foreach ($rates['sell_rates'] as $currency => $rate) {
-                $exrates[$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
+                $exrates[$currency][$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
             }
             foreach ($rates['buy_rates'] as $currency => $rate) {
-                $exrates[$this->symbol[$currency] . '  ' . $currency . '  (BUY)'] = $rate;
+                $exrates[$currency][$this->symbol[$currency] . '  ' . $currency . '  (BUY)'] = $rate;
             }
             $reply_rates = array_sort_recursive($exrates);
 
+            foreach ($reply_rates as $currency => $rates) {
 
-
-            $i=1;
-
-            foreach ($reply_rates as $currency => $rate) {
-
-                $element = Element::create($currency);
-
-                $reply .= $currency . '  :  ' . $rate . "               
+                foreach ($rates as $curr => $rate) {
+                    $element = Element::create($curr);
+                    $reply = $curr . '  :  ' . $rate . "               
                 \n";
-
-                $element->subtitle($reply);
-
-                if($i % 4 == 0) {
-                    $template = ListTemplate::create();
-
-                    $template->useCompactView();
-                    $template->addElement($element);
-                    $bot->reply($template);
+                    $element->subtitle($reply);
                 }
-                $i++;
+
+                $template = ListTemplate::create();
+
+                $template->useCompactView();
+                $template->addElement($element);
+                $bot->reply($template);
             }
 
         });
