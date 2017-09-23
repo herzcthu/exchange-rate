@@ -21,6 +21,7 @@ class BotManController extends Controller
 
     private $symbol = [
         'EURO' => '€',
+        'EUR' => '€',
         'USD' => '$',
         'THB' => '฿',
         'SGD' => 'S$',
