@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use BotMan\BotMan\BotMan;
 use BotMan\Drivers\Facebook\Extensions\Element;
 use BotMan\Drivers\Facebook\Extensions\GenericTemplate;
+use BotMan\Drivers\Facebook\FacebookDriver;
 use Carbon\Carbon;
 use Herzcthu\ExchangeRates\CrawlBank;
 use Illuminate\Http\Request;
@@ -45,28 +46,32 @@ class BotManController extends Controller
 
     public function facebook_handle(Request $request, CrawlBank $crawlBank)
     {
+        Log::info($request->headers->all());
         Log::info($request->all());
         
         $botman = $this->botman;
 
-        $botman->hears('(usd|sgd|thb)', function(BotMan $bot, $currency) use ($crawlBank) {
-            $rates = $this->get_exrate($currency, $bot, $crawlBank);
-            Log::info($rates);
-            $elements = [];
-            $currency = strtoupper($currency);
-            foreach($rates as $bank => $bank_rates) {
-                $element = Element::create($currency.' rate for '. $bank);
-                $rates = '';
-                foreach($bank_rates as $type => $rate) {
-                    $rates .= "\t".$type. ' : ' .$rate."\n";
+        $botman->group(['driver' => FacebookDriver::class], function($bot) use ($crawlBank) {
+
+            $bot->hears('(usd|sgd|thb)', function (BotMan $bot, $currency) use ($crawlBank) {
+                $rates = $this->get_exrate($currency, $bot, $crawlBank);
+                Log::info($rates);
+                $elements = [];
+                $currency = strtoupper($currency);
+                foreach ($rates as $bank => $bank_rates) {
+                    $element = Element::create($currency . ' rate for ' . $bank);
+                    $rates = '';
+                    foreach ($bank_rates as $type => $rate) {
+                        $rates .= "\t" . $type . ' : ' . $rate . "\n";
+                    }
+                    $element->subtitle($rates);
+                    $elements[] = $element;
                 }
-                $element->subtitle($rates);
-                $elements[] = $element;
-            }
-            $bot->reply(
-                GenericTemplate::create()
-                    ->addElements($elements)
-            );
+                $bot->reply(
+                    GenericTemplate::create()
+                        ->addElements($elements)
+                );
+            });
         });
 
         $botman->listen();
@@ -108,6 +113,7 @@ class BotManController extends Controller
             $central_bank = $crawlBank->getRatesArr( 'cbm');
             $default_key = array_fill_keys(array_keys($central_bank['rates']), '');
             $banks = ['kbz', 'mcb', 'aya', 'agd', 'cbbank'];
+            $bank_rates = [];
             foreach($banks as $bank) {
                 $sell_rates = $crawlBank->getRatesArr($bank, 'sell');
                 $buy_rates = $crawlBank->getRatesArr($bank, 'buy');
