@@ -165,12 +165,13 @@ class BotManController extends Controller
             );
         });
 
-        $botman->hears('(cbm|agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $bank) use ($crawlBank) {
+        $botman->hears('(agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $bank) use ($crawlBank) {
             $rates = $this->get_bankrate($bank, $bot, $crawlBank);
             Log::info($rates);
             $title = str_replace(' ', '  ', $rates['info']) . ' ';
             $reply = '';
             $exrates = [];
+
             foreach ($rates['sell_rates'] as $currency => $rate) {
                 $exrates[$currency][$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
             }
@@ -185,10 +186,11 @@ class BotManController extends Controller
                 $template->useCompactView();
 
                 foreach ($rates as $curr => $rate) {
-                    $element = Element::create($curr);
                     $reply = $curr . '  :  ' . $rate . "               
                 \n";
-                    $element->subtitle($reply);
+
+                    $element = Element::create($reply);
+                    $element->subtitle($bank);
                     $template->addElement($element);
                     unset($element);
                 }
