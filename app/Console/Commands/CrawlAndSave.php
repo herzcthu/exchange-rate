@@ -70,6 +70,7 @@ class CrawlAndSave extends Command
         $storage = $this->botMan->driverStorage();
 
         foreach($currencies as $currency) {
+            $currency = strtoupper($currency);
             $central_bank = $crawlBank->getRatesArr('cbm');
             $default_key = array_fill_keys(array_keys($central_bank['rates']), '');
             $bank_rates = [];
