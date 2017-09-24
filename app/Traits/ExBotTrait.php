@@ -28,7 +28,7 @@ trait ExBotTrait
     ];
 
     private function currencyResponseWeb(BotMan $bot, $match, CrawlBank $crawlBank, $nocache = false) {
-
+        $match = strtolower($match);
         switch ($match) {
             case 'eur':
             case 'euro':
@@ -63,6 +63,7 @@ trait ExBotTrait
      */
     private function bankResponseWeb(BotMan $bot, $match, CrawlBank $crawlBank, $nocache=false)
     {
+        $match = strtolower($match);
         switch ($match) {
             case 'cb':
             case 'cbbank':
@@ -106,6 +107,7 @@ trait ExBotTrait
      */
     private function currencyResponseFb(BotMan $bot, $match, $crawlBank, $nocache = false)
     {
+        $match = strtolower($match);
         switch ($match) {
             case 'eur':
             case 'euro':
@@ -144,6 +146,7 @@ trait ExBotTrait
      */
     private function bankResponseFb(BotMan $bot, $match, $crawlBank, $nocache = false)
     {
+        $match = strtolower($match);
         switch ($match) {
             case 'cb':
             case 'cbbank':
