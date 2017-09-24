@@ -17,10 +17,10 @@ class CrawlAndSave extends Command
     private $botMan;
 
     private $currencies = [
-        'usd',
-        'sgd',
-        'eur',
-        'thb'
+        'USD',
+        'SGD',
+        'EUR',
+        'THB'
     ];
 
     private $banks = [
@@ -67,17 +67,32 @@ class CrawlAndSave extends Command
         $now = Carbon::now();
         $today = $now->format('Y-m-d-a');
 
+        $storage = $this->botMan->driverStorage();
 
-//        foreach($currencies as $currency) {
-//            $this->get_exrate($currency, $this->botman,$crawlBank,true);
-//        }
+        foreach($currencies as $currency) {
+            $central_bank = $crawlBank->getRatesArr('cbm');
+            $default_key = array_fill_keys(array_keys($central_bank['rates']), '');
+            $bank_rates = [];
+            $key = (string) $today . $currency;
+
+            foreach ($banks as $bank) {
+                $sell_rates = $crawlBank->getRatesArr($bank, 'sell');
+                $buy_rates = $crawlBank->getRatesArr($bank, 'buy');
+                $sell = array_merge($default_key, $sell_rates['sell_rates']);
+                $buy = array_merge($default_key, $buy_rates['buy_rates']);
+                $bank_rates[$currency][$bank]['sell'] = $sell[$currency];
+                $bank_rates[$currency][$bank]['buy'] = $buy[$currency];
+            }
+            $storage->save($bank_rates, $key);
+            unset($bank_rates);
+        }
 
         foreach ($banks as $bank) {
-            $storage = $this->botMan->driverStorage();
+
             $key = (string) $today . $bank;
             $bank_rates[$key] = $crawlBank->getRatesArr($bank);
-            $storage->save($bank_rates);
-            unset($storage);
+            $storage->save($bank_rates, $key);
+            unset($bank_rates);
         }
 
     }
