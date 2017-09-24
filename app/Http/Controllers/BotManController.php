@@ -25,11 +25,12 @@ class BotManController extends Controller
         'USD' => '$',
         'THB' => '฿',
         'SGD' => 'S$',
+        'MYR' => 'K',
     ];
 
     public function __construct()
     {
-        $this->botman = app('botman');
+        $this->botman = app('botman-redis');
     }
 
     /**
@@ -43,40 +44,27 @@ class BotManController extends Controller
             Log::info($request->all());
         }
 
-        $botman->hears('(usd|sgd|thb)', function (BotMan $bot, $currency) use ($crawlBank) {
-            $rates = $this->get_exrate($currency, $bot, $crawlBank);
-            Log::info($rates);
-            $currency = strtoupper($currency);
-            foreach ($rates as $bank => $bank_rates) {
+        $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
 
-                $reply = "\n" . $currency . ' rate for ' . $bank;
-                foreach ($bank_rates as $type => $rate) {
-                    $reply .= "\t" . $type . ' : ' . $rate . "\n";
-                }
-                $bot->reply($reply);
-            }
+            $this->CurrencyResponseWeb($bot, $match, $crawlBank, false);
+
         });
 
-        $botman->hears('(agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $bank) use ($crawlBank) {
-            $rates = $this->get_bankrate($bank, $bot, $crawlBank);
-            Log::info($rates);
-            $reply = str_replace(' ', '  ', $rates['info']) . ' ';
-            $exrates = [];
-            foreach ($rates['sell_rates'] as $currency => $rate) {
-                //$exrates[$currency][] = [$currency.' (SELL)' => $rate];
-                $exrates[$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
-            }
-            foreach ($rates['buy_rates'] as $currency => $rate) {
-                //$exrates[$currency][] = [$currency.' (BUY)' => $rate];
-                $exrates[$this->symbol[$currency] . '  ' . $currency . '  (BUY)'] = $rate;
-            }
-            $reply_rates = array_sort_recursive($exrates);
+        $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
 
-            foreach ($reply_rates as $currency => $rate) {
-                $reply .= $currency . '  :  ' . $rate . "               
-                \n";
-            }
-            $bot->reply($reply);
+            $this->CurrencyResponseWeb($bot, $match, $crawlBank, true);
+
+        });
+
+        $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
+
+            $this->bankResponseWeb($bot, $match, $crawlBank);
+
+        });
+
+        $botman->hears('latest (agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
+
+            $this->bankResponseWeb($bot, $match, $crawlBank, true);
         });
 
         $botman->fallback(function($bot) {
@@ -86,57 +74,6 @@ class BotManController extends Controller
         $botman->listen();
     }
 
-    protected function get_exrate($currency, BotMan $bot, CrawlBank $crawlBank)
-    {
-        $currency = strtoupper($currency);
-        $now = Carbon::now();
-        $today = $now->format('Y-m-d a');
-        $key = $today . $currency;
-
-        $exrates = $bot->driverStorage();
-
-        if ($exrates->get($key)) {
-            $today_rates = $exrates->get($key);
-            return $today_rates[$currency];
-        } else {
-            $central_bank = $crawlBank->getRatesArr('cbm');
-            $default_key = array_fill_keys(array_keys($central_bank['rates']), '');
-            $banks = ['kbz', 'mcb', 'aya', 'agd', 'cbbank'];
-            $bank_rates = [];
-            foreach ($banks as $bank) {
-                $sell_rates = $crawlBank->getRatesArr($bank, 'sell');
-                $buy_rates = $crawlBank->getRatesArr($bank, 'buy');
-                $sell = array_merge($default_key, $sell_rates['sell_rates']);
-                $buy = array_merge($default_key, $buy_rates['buy_rates']);
-                $bank_rates[$key][$currency][$bank]['sell'] = $sell[$currency];
-                $bank_rates[$key][$currency][$bank]['buy'] = $buy[$currency];
-            }
-            $bot->driverStorage()->save($bank_rates);
-            return $bank_rates[$key][$currency];
-        }
-    }
-
-    protected function get_bankrate($bank, BotMan $bot, CrawlBank $crawlBank)
-    {
-        $bank = strtoupper($bank);
-        $now = Carbon::now();
-        $today = $now->format('Y-m-d a');
-        $key = $today . $bank;
-
-        $exrates = $bot->driverStorage();
-
-        if ($exrates->get($key)) {
-            $today_rates = $exrates->get($key);
-            Log::info($today_rates);
-            return $today_rates;
-        } else {
-            $bank_rates[$key] = $crawlBank->getRatesArr($bank);
-            Log::info($bank_rates);
-        }
-
-        $bot->driverStorage()->save($bank_rates);
-        return $bank_rates[$key];
-    }
 
     public function facebook_handle(Request $request, CrawlBank $crawlBank)
     {
@@ -149,7 +86,15 @@ class BotManController extends Controller
 
         //$botman->group(['driver' => FacebookDriver::class], function($bot) use ($crawlBank) {
 
-        $botman->hears('(usd|sgd|thb)', function (BotMan $bot, $currency) use ($crawlBank) {
+        $botman->hears('(usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
+            switch ($match) {
+                case 'eur':
+                case 'euro':
+                    $currency = 'eur';
+                    break;
+                default:
+                    $currency = $match;
+            }
             $rates = $this->get_exrate($currency, $bot, $crawlBank);
             Log::info($rates);
             $elements = [];
@@ -232,4 +177,138 @@ class BotManController extends Controller
     {
         $bot->startConversation(new ExampleConversation());
     }
+
+    private function currencyResponseWeb(BotMan $bot, $match, CrawlBank $crawlBank, $nocache = false) {
+
+        switch ($match) {
+            case 'eur':
+            case 'euro':
+                $currency = 'eur';
+                break;
+            default:
+                $currency = $match;
+        }
+
+        $rates = $this->get_exrate($currency, $bot, $crawlBank, $nocache);
+
+        Log::info($rates);
+
+        $currency = strtoupper($currency);
+
+        foreach ($rates as $bank => $bank_rates) {
+
+            $reply = "\n" . $currency . ' rate for ' . $bank;
+            foreach ($bank_rates as $type => $rate) {
+                $reply .= "\t" . $type . ' : ' . $rate . "\n";
+            }
+            $bot->reply($reply);
+        }
+
+    }
+
+    /**
+     * @param BotMan $bot
+     * @param $match
+     * @param $nocache
+     * @param $crawlBank
+     */
+    private function bankResponseWeb(BotMan $bot, $match, CrawlBank $crawlBank, $nocache=false)
+    {
+        switch ($match) {
+            case 'cb':
+            case 'cbbank':
+                $bank = 'cbbank';
+                break;
+            default:
+                $bank = $match;
+        }
+
+        $rates = $this->get_bankrate($bank, $bot, $crawlBank, $nocache);
+
+        Log::info($rates);
+
+        $reply = str_replace(' ', '  ', $rates['info']) . ' ';
+
+        $exrates = [];
+
+        foreach ($rates['sell_rates'] as $currency => $rate) {
+            $exrates[$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
+        }
+
+        foreach ($rates['buy_rates'] as $currency => $rate) {
+            $exrates[$this->symbol[$currency] . '  ' . $currency . '  (BUY)'] = $rate;
+        }
+
+        $reply_rates = array_sort_recursive($exrates);
+
+        foreach ($reply_rates as $currency => $rate) {
+            $reply .= $currency . '  :  ' . $rate . "               
+                \n";
+        }
+
+        $bot->reply($reply);
+    }
+
+    protected function get_exrate($currency, BotMan $bot, CrawlBank $crawlBank, $nocache = false)
+    {
+        $currency = strtoupper($currency);
+        $now = Carbon::now();
+        $today = $now->format('Y-m-d a');
+        $key = $today . $currency;
+
+        $exrates = $bot->driverStorage();
+
+
+        if ($exrates->find($key)->has($key) && !$nocache) {
+            Log::info($exrates->find($key));
+            Log::info($exrates->get($key));
+            $today_rates = $exrates->find($key);
+            $rates = $today_rates[$currency];
+
+        } else {
+
+            $central_bank = $crawlBank->getRatesArr('cbm');
+            $default_key = array_fill_keys(array_keys($central_bank['rates']), '');
+            $banks = ['kbz', 'mcb', 'aya', 'agd', 'cbbank'];
+            $bank_rates = [];
+
+            foreach ($banks as $bank) {
+                $sell_rates = $crawlBank->getRatesArr($bank, 'sell');
+                $buy_rates = $crawlBank->getRatesArr($bank, 'buy');
+                $sell = array_merge($default_key, $sell_rates['sell_rates']);
+                $buy = array_merge($default_key, $buy_rates['buy_rates']);
+                $bank_rates[$currency][$bank]['sell'] = $sell[$currency];
+                $bank_rates[$currency][$bank]['buy'] = $buy[$currency];
+            }
+
+            $exrates->save($bank_rates, $key);
+
+            $rates = $bank_rates[$currency];
+        }
+
+        return $rates;
+    }
+
+    protected function get_bankrate($bank, BotMan $bot, CrawlBank $crawlBank, $nocache = false)
+    {
+        $bank = strtoupper($bank);
+        $now = Carbon::now();
+        $today = $now->format('Y-m-d-a');
+        $key = (string) $today . $bank;
+
+        $exrates = $bot->driverStorage();
+
+        if ($exrates->find($key) && !$nocache) {
+            $today_rates = $exrates->find($key);
+            Log::info($today_rates);
+        } else {
+            $bank_rates = $crawlBank->getRatesArr($bank);
+            Log::info($bank_rates);
+            $exrates->save($bank_rates, $key);
+            $today_rates = $bank_rates;
+        }
+
+        return $today_rates;
+    }
+
 }

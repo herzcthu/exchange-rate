@@ -173,6 +173,7 @@ return [
          */
         BotMan\Tinker\TinkerServiceProvider::class,
         App\Providers\BotMan\DriverServiceProvider::class,
+        App\Providers\BotMan\BotManRedisServiceProvider::class,
         BotMan\BotMan\BotManServiceProvider::class,
         BotMan\Studio\Providers\StudioServiceProvider::class,
 
