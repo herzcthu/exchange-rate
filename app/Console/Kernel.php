@@ -24,8 +24,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        $schedule->command('crawl:save')->weekdays()
+            ->hourly()
+            ->timezone('Asia/Rangoon')
+            ->between('8:00', '16:00');
     }
 
     /**

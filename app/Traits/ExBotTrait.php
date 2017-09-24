@@ -190,7 +190,7 @@ trait ExBotTrait
     {
         $currency = strtoupper($currency);
         $now = Carbon::now();
-        $today = $now->format('Y-m-d a');
+        $today = $now->format('Y-m-d-a');
         $key = (string) $today . $currency;
 
         $exrates = $bot->driverStorage();
