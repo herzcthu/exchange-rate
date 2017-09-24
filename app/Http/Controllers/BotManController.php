@@ -86,72 +86,30 @@ class BotManController extends Controller
 
         //$botman->group(['driver' => FacebookDriver::class], function($bot) use ($crawlBank) {
 
-        $botman->hears('(usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
-            switch ($match) {
-                case 'eur':
-                case 'euro':
-                    $currency = 'eur';
-                    break;
-                default:
-                    $currency = $match;
-            }
-            $rates = $this->get_exrate($currency, $bot, $crawlBank);
-            Log::info($rates);
-            $elements = [];
-            $currency = strtoupper($currency);
-            foreach ($rates as $bank => $bank_rates) {
-                $template = ListTemplate::create();
+        $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
 
-                $template->useCompactView();
-
-                foreach ($bank_rates as $type => $rate) {
-                    $rates = "\t" .$currency.'  ('. $type . ')  :  ' . $rate . "\n";
-                    $element = Element::create($rates);
-                    $element->subtitle($bank.'  rate');
-                    $template->addElement($element);
-                    unset($element);
-                }
-
-                $bot->reply($template);
-
-            }
+            $this->currencyResponseFb($bot, $match, $crawlBank);
 
         });
 
-        $botman->hears('(agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $bank) use ($crawlBank) {
-            $rates = $this->get_bankrate($bank, $bot, $crawlBank);
-            Log::info($rates);
-            $title = str_replace(' ', '  ', $rates['info']) . ' ';
-            $reply = '';
-            $exrates = [];
+        $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
 
-            foreach ($rates['sell_rates'] as $currency => $rate) {
-                $exrates[$currency][$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
-            }
-            foreach ($rates['buy_rates'] as $currency => $rate) {
-                $exrates[$currency][$this->symbol[$currency] . '  ' . $currency . '  (BUY)'] = $rate;
-            }
-            $reply_rates = array_sort_recursive($exrates);
-
-            foreach ($reply_rates as $currency => $rates) {
-                $template = ListTemplate::create();
-
-                $template->useCompactView();
-
-                foreach ($rates as $curr => $rate) {
-                    $reply = $curr . '  :  ' . $rate . "               
-                \n";
-
-                    $element = Element::create($reply);
-                    $element->subtitle($bank);
-                    $template->addElement($element);
-                    unset($element);
-                }
-
-                $bot->reply($template);
-            }
+            $this->bankResponseFb($bot, $match, $crawlBank);
 
         });
+
+        $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
+
+            $this->currencyResponseFb($bot, $match, $crawlBank);
+
+        });
+
+        $botman->hears('latest (agd|aya|cb|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
+
+            $this->bankResponseFb($bot, $match, $crawlBank);
+
+        });
+
         //});
 
         $botman->fallback(function($bot) {
@@ -247,6 +205,94 @@ class BotManController extends Controller
         }
 
         $bot->reply($reply);
+    }
+
+    /**
+     * @param BotMan $bot
+     * @param $match
+     * @param $this
+     * @param $crawlBank
+     */
+    private function currencyResponseFb(BotMan $bot, $match, $crawlBank, $nocache = false)
+    {
+        switch ($match) {
+            case 'eur':
+            case 'euro':
+                $currency = 'eur';
+                break;
+            default:
+                $currency = $match;
+        }
+        $rates = $this->get_exrate($currency, $bot, $crawlBank, $nocache);
+        Log::info($rates);
+        $elements = [];
+        $currency = strtoupper($currency);
+        foreach ($rates as $bank => $bank_rates) {
+            $template = ListTemplate::create();
+
+            $template->useCompactView();
+
+            foreach ($bank_rates as $type => $rate) {
+                $rates = "\t" . $currency . '  (' . $type . ')  :  ' . $rate . "\n";
+                $element = Element::create($rates);
+                $element->subtitle($bank . '  rate');
+                $template->addElement($element);
+                unset($element);
+            }
+
+            $bot->reply($template);
+
+        }
+    }
+
+    /**
+     * @param BotMan $bot
+     * @param $match
+     * @param $this
+     * @param $crawlBank
+     */
+    private function bankResponseFb(BotMan $bot, $match, $crawlBank, $nocache = false)
+    {
+        switch ($match) {
+            case 'cb':
+            case 'cbbank':
+                $bank = 'cbbank';
+                break;
+            default:
+                $bank = $match;
+        }
+
+        $rates = $this->get_bankrate($bank, $bot, $crawlBank, $nocache);
+        Log::info($rates);
+        $title = str_replace(' ', '  ', $rates['info']) . ' ';
+        $reply = '';
+        $exrates = [];
+
+        foreach ($rates['sell_rates'] as $currency => $rate) {
+            $exrates[$currency][$this->symbol[$currency] . '  ' . $currency . '  (SELL)'] = $rate;
+        }
+        foreach ($rates['buy_rates'] as $currency => $rate) {
+            $exrates[$currency][$this->symbol[$currency] . '  ' . $currency . '  (BUY)'] = $rate;
+        }
+        $reply_rates = array_sort_recursive($exrates);
+
+        foreach ($reply_rates as $currency => $rates) {
+            $template = ListTemplate::create();
+
+            $template->useCompactView();
+
+            foreach ($rates as $curr => $rate) {
+                $reply = $curr . '  :  ' . $rate . "               
+                \n";
+
+                $element = Element::create($reply);
+                $element->subtitle($bank);
+                $template->addElement($element);
+                unset($element);
+            }
+
+            $bot->reply($template);
+        }
     }
 
     protected function get_exrate($currency, BotMan $bot, CrawlBank $crawlBank, $nocache = false)
