@@ -9,6 +9,8 @@ use BotMan\BotMan\BotMan;
 use BotMan\Drivers\Facebook\Extensions\Element;
 use BotMan\Drivers\Facebook\Extensions\GenericTemplate;
 use BotMan\Drivers\Facebook\Extensions\ListTemplate;
+use BotMan\Drivers\Facebook\FacebookDriver;
+use BotMan\Drivers\Web\WebDriver;
 use Carbon\Carbon;
 use Herzcthu\ExchangeRates\CrawlBank;
 use Illuminate\Http\Request;
@@ -46,80 +48,74 @@ class BotManController extends Controller
             Log::info($request->all());
         }
 
-        $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
+        $botman->group(['driver' => WebDriver::class], function($botman) use ($crawlBank) {
 
-            $this->CurrencyResponseWeb($bot, $match, $crawlBank, false);
+            $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->CurrencyResponseWeb($bot, $match, $crawlBank, false);
+
+            });
+
+            $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->CurrencyResponseWeb($bot, $match, $crawlBank, true);
+
+            });
+
+            $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->bankResponseWeb($bot, $match, $crawlBank);
+
+            });
+
+            $botman->hears('latest (agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->bankResponseWeb($bot, $match, $crawlBank, true);
+            });
 
         });
 
-        $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
+        $botman->group(['driver' => FacebookDriver::class], function($botman) use ($crawlBank) {
 
-            $this->CurrencyResponseWeb($bot, $match, $crawlBank, true);
+            $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->currencyResponseFb($bot, $match, $crawlBank);
+
+            });
+
+            $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->bankResponseFb($bot, $match, $crawlBank);
+
+            });
+
+            $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->currencyResponseFb($bot, $match, $crawlBank);
+
+            });
+
+            $botman->hears('latest (agd|aya|cb|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
+
+                $this->bankResponseFb($bot, $match, $crawlBank);
+
+            });
 
         });
 
-        $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
-
-            $this->bankResponseWeb($bot, $match, $crawlBank);
-
-        });
-
-        $botman->hears('latest (agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
-
-            $this->bankResponseWeb($bot, $match, $crawlBank, true);
+        $botman->hears('help|^\?$', function (BotMan $bot) {
+            $bot->reply('Available commands : 
+                usd, eur, euro, thb, sgd,
+                agd, aya, cb, kbz, mcb');
         });
 
         $botman->fallback(function($bot) {
-            $bot->reply('Sorry, I did not understand these commands.');
+            $bot->reply('Sorry, I did not understand these commands. Try help.');
         });
 
         $botman->listen();
     }
 
-
-    public function facebook_handle(Request $request, CrawlBank $crawlBank)
-    {
-        if (config('app.debug')) {
-            Log::info($request->headers->all());
-            Log::info($request->all());
-        }
-
-        $botman = $this->botman;
-
-        //$botman->group(['driver' => FacebookDriver::class], function($bot) use ($crawlBank) {
-
-        $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
-
-            $this->currencyResponseFb($bot, $match, $crawlBank);
-
-        });
-
-        $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
-
-            $this->bankResponseFb($bot, $match, $crawlBank);
-
-        });
-
-        $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
-
-            $this->currencyResponseFb($bot, $match, $crawlBank);
-
-        });
-
-        $botman->hears('latest (agd|aya|cb|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
-
-            $this->bankResponseFb($bot, $match, $crawlBank);
-
-        });
-
-        //});
-
-        $botman->fallback(function($bot) {
-            $bot->reply('Sorry, I did not understand these commands.');
-        });
-
-        $botman->listen();
-    }
 
     /**
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View

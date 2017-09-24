@@ -20,5 +20,5 @@ Route::group(['prefix' => 'service/{service}'], function () {
 });
 
 Route::match(['get', 'post'], 'botman', 'BotManController@handle');
-Route::match(['get','post'],'chatbot', ['as' => 'exchange.chatbot', 'uses' => 'BotManController@facebook_handle'] );
+Route::match(['get','post'],'chatbot', ['as' => 'exchange.chatbot', 'uses' => 'BotManController@handle'] );
 Route::get('/botman/tinker', 'BotManController@tinker');
