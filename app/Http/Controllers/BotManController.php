@@ -105,8 +105,8 @@ class BotManController extends Controller
 
         $botman->hears('help|^\?$', function (BotMan $bot) {
             $bot->reply('Available commands : 
-                usd, eur, euro, thb, sgd,
-                agd, aya, cb, kbz, mcb');
+            usd, eur, euro, thb, sgd,
+            agd, aya, cb, kbz, mcb');
         });
 
         $botman->fallback(function($bot) {
