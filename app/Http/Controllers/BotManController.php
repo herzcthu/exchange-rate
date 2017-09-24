@@ -259,7 +259,7 @@ class BotManController extends Controller
         $exrates = $bot->driverStorage();
 
 
-        if ($exrates->find($key)->has($key) && !$nocache) {
+        if ($exrates->find($key)->has($currency) && !$nocache) {
             Log::info($exrates->find($key));
             Log::info($exrates->get($key));
             $today_rates = $exrates->find($key);
@@ -298,15 +298,16 @@ class BotManController extends Controller
 
         $exrates = $bot->driverStorage();
 
-        if ($exrates->find($key) && !$nocache) {
-            $today_rates = $exrates->find($key);
-            Log::info($today_rates);
+        if ($exrates->find($key)->has($key) && !$nocache) {
+            $today_rates = $exrates->find($key)->get($key);
         } else {
-            $bank_rates = $crawlBank->getRatesArr($bank);
-            Log::info($bank_rates);
+            $bank_rates[$key] = $crawlBank->getRatesArr($bank);
+
             $exrates->save($bank_rates, $key);
-            $today_rates = $bank_rates;
+            $today_rates = $bank_rates[$key];
         }
+
+        Log::info($today_rates);
 
         return $today_rates;
     }
