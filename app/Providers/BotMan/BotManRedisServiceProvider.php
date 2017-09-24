@@ -26,12 +26,16 @@ class BotManRedisServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton('botman-redis', function ($app) {
+        $this->app->singleton('redis-store', function($app) {
             $storage = new RedisStorage(
-                        config('botman.config.redis.host', env('REDIS_HOST')),
-                        config('botman.config.redis.port', env('REDIS_PORT')),
-                        config('botman.config.redis.password', env('REDIS_PASSWORD'))
+                config('botman.config.redis.host', env('REDIS_HOST')),
+                config('botman.config.redis.port', env('REDIS_PORT')),
+                config('botman.config.redis.password', env('REDIS_PASSWORD'))
             );
+            return $storage;
+        });
+        $this->app->singleton('botman-redis', function ($app) {
+            $storage = app('redis-store');
 
             return BotManFactory::create(config('botman', []), new LaravelCache(), $app->make('request'),
                 $storage);
