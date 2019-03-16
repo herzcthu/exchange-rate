@@ -41,7 +41,7 @@ class BotManController extends Controller
     /**
      * Place your BotMan logic here.
      */
-    public function handle(Request $request, CrawlBank $crawlBank)
+    public function handle(Request $request, CrawlBank $crawlBank, GoogleTranslate $translate)
     {
         $botman = $this->botman;
         if (config('app.debug')) {
@@ -110,9 +110,9 @@ class BotManController extends Controller
             agd, aya, cb, kbz, mcb');
         });
 
-        $botman->hears('.*', function (BotMan $bot, $message) {
-            $translated = GoogleTranslate::translate($message, 'my');
-            $bot->reply($translated);
+        $botman->hears('(.*)', function (BotMan $bot, $message) use ($translate) {
+            $translated = $translate->translate($message, 'my');
+            $bot->reply($translated['text']);
         });
 
         $botman->fallback(function($bot) {
