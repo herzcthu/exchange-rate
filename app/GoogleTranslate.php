@@ -22,4 +22,13 @@ class GoogleTranslate
         ]);
     }
 
+    /**
+     * @return TranslateClient
+     */
+    public function getLang($text)
+    {
+        $lang = $this->translate->detectLanguage($text);
+        return $lang['languageCode'];
+    }
+
 }

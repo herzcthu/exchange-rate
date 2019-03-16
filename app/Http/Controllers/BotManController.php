@@ -110,13 +110,16 @@ class BotManController extends Controller
             agd, aya, cb, kbz, mcb');
         });
 
-        $botman->hears('(.*)', function (BotMan $bot, $message) use ($translate) {
-            $translated = $translate->translate($message, 'my');
-            $bot->reply($translated['text']);
-        });
+        $botman->fallback(function($bot)  use ($translate)  {
+            $message = $bot->getMessage()->getText();
+            $lang = $translate->getLang($message);
 
-        $botman->fallback(function($bot) {
-            $bot->reply('Sorry, I did not understand these commands. Try help.');
+            if($lang == 'my') {
+                $translated = $translate->translate($message, 'en');
+            } else {
+                $translated = $translate->translate($message, 'my');
+            }
+            $bot->reply($translated['text']);
         });
 
         $botman->listen();
