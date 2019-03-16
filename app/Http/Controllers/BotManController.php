@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Conversations\ExampleConversation;
+use App\GoogleTranslate;
 use App\Traits\ExBotTrait;
 use BotMan\BotMan\BotMan;
 use BotMan\Drivers\Facebook\Extensions\Element;
@@ -107,6 +108,11 @@ class BotManController extends Controller
             $bot->reply('Available commands : 
             usd, eur, euro, thb, sgd,
             agd, aya, cb, kbz, mcb');
+        });
+
+        $botman->hears('.*', function (BotMan $bot, $message) {
+            $translated = GoogleTranslate::translate($message, 'my');
+            $bot->reply($translated);
         });
 
         $botman->fallback(function($bot) {

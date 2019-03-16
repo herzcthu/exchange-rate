@@ -18,6 +18,7 @@
         "botman/tinker": "~1.0",
         "clue/stdio-react": "^1.0",
         "fideloper/proxy": "~3.3",
+        "google/cloud-translate": "^1.2",
         "herzcthu/exchanges-rates-lib": "dev-master",
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0",

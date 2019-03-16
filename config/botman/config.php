@@ -14,8 +14,8 @@ return [
     */
     'conversation_cache_time' => 30,
     'redis' => [
-        'host' => env('REDIS_HOST', 'localhost'),
+        'host' => env('REDIS_HOST', 'redis'),
         'port' => env('REDIS_PORT', 6379),
-        'password' => env('REDIS_HOST', null)
+        'password' => env('REDIS_PASSWORD', null)
     ],
 ];
