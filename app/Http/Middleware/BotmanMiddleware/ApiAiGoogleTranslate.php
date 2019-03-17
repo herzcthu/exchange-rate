@@ -29,7 +29,7 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
     {
         if (config('app.debug')) {
             Log::info("Incoming Message =>");
-            Log::info($message);
+            Log::info($message->getText());
         }
         $text = $message->getText();
         $lang = $this->translate->getLang($text);
