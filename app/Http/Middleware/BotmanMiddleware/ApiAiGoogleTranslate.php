@@ -28,16 +28,21 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
     {
         $text = $message->getText();
         $lang = $this->translate->getLang($text);
+        $src_lang = 'en';
 
         if( !in_array($lang, ['en', 'my']) || (config('botman.config.translate') && $lang == 'my') ) {
             $translated = $this->translate->translate($text, 'en');
             $text = $translated['text'];
         }
 
+        if(!config('botman.config.translate') && $lang == 'my'){
+            $src_lang = 'hi'; // using Hindi lang code because DialogFlow do not support Burmese
+        }
+
         $response = $this->http->post($this->apiUrl, [], [
             'query' => [$text],
             'sessionId' => md5($message->getRecipient()),
-            'lang' => 'en',
+            'lang' => $src_lang,
         ], [
             'Authorization: Bearer '.$this->token,
             'Content-Type: application/json; charset=utf-8',
