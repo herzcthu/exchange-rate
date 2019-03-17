@@ -60,13 +60,13 @@ class BotManController extends Controller
 
         $botman->group(['driver' => WebDriver::class], function($botman) use ($crawlBank) {
 
-            $this->processMsg($crawlBank, 'web');
+            $this->processMsg($botman, $crawlBank, 'web');
 
         });
 
         $botman->group(['driver' => FacebookDriver::class], function($botman) use ($crawlBank) {
 
-            $this->processMsg($crawlBank, 'facebook');
+            $this->processMsg($botman, $crawlBank, 'facebook');
 
         });
 
@@ -125,9 +125,8 @@ class BotManController extends Controller
     }
 
 
-    private function processMsg(CrawlBank $crawlBank, $channel)
+    private function processMsg(BotMan $botman, CrawlBank $crawlBank, $channel)
     {
-        $botman = $this->botman;
         $botman->hears('(.*)',function(BotMan $bot) use ($crawlBank, $channel) {
             $message = $bot->getMessage()->getText();
             if (config('app.debug')) {
