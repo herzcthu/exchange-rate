@@ -147,12 +147,16 @@ class BotManController extends Controller
 
             if(array_key_exists('currency-name', $apiParameters)) {
                 $currency = $apiParameters['currency-name'];
-                $this->CurrencyResponse($bot, $currency, $crawlBank, false, $channel);
+                if(!empty($currency)) {
+                    $this->CurrencyResponse($bot, $currency, $crawlBank, false, $channel);
+                }
             }
 
             if(array_key_exists('bank-name', $apiParameters)) {
                 $bank = $apiParameters['bank-name'];
-                $this->bankResponse($bot, $bank, $crawlBank, false, $channel);
+                if(!empty($bank)) {
+                    $this->bankResponse($bot, $bank, $crawlBank, false, $channel);
+                }
             }
 
             if(!empty($apireply)) {
