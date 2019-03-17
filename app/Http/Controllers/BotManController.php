@@ -25,6 +25,8 @@ class BotManController extends Controller
 
     protected $dialogFlowTranslate;
 
+    protected $translate;
+
     private $banks_url = [];
 
     private $symbol = [
@@ -36,17 +38,19 @@ class BotManController extends Controller
         'MYR' => 'K',
     ];
 
-    public function __construct()
+    public function __construct(GoogleTranslate $translate)
     {
         $this->botman = app('botman-redis');
         $this->dialogFlowTranslate = ApiAiGoogleTranslate::create(env('DIALOGFLOW_CLIENT_TOKEN'));
-        $this->botman->middleware->recieved($this->dialogFlowTranslate);
+        $this->translate = $translate;
+        $this->dialogFlowTranslate->translate($translate);
+        $this->botman->middleware->received($this->dialogFlowTranslate);
     }
 
     /**
      * Place your BotMan logic here.
      */
-    public function handle(Request $request, CrawlBank $crawlBank, GoogleTranslate $translate)
+    public function handle(Request $request, CrawlBank $crawlBank)
     {
         $botman = $this->botman;
         if (config('app.debug')) {
@@ -115,10 +119,15 @@ class BotManController extends Controller
             agd, aya, cb, kbz, mcb');
         });
 
-        $botman->fallback(function($bot)  {
+        $botman->hears('(.*)', function (BotMan $bot) {
             $message = $bot->getMessage()->getText();
             $bot->reply($message);
         })->middleware($this->dialogFlowTranslate);
+
+        $botman->fallback(function($bot)  {
+            $message = $bot->getMessage()->getText();
+            $bot->reply($message);
+        });
 
         $botman->listen();
     }

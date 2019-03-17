@@ -11,6 +11,14 @@ use BotMan\BotMan\Middleware\ApiAi;
 class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
 {
 
+    protected $translate;
+
+    public function translate(GoogleTranslate $translate)
+    {
+        $this->translate = $translate;
+        return $this;
+    }
+
     /**
      * Perform the API.ai API call and cache it for the message.
      * @param  \BotMan\BotMan\Messages\Incoming\IncomingMessage $message
@@ -18,12 +26,11 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
      */
     protected function getResponse(IncomingMessage $message)
     {
-        $translate = new GoogleTranslate();
         $text = $message->getText();
-        $lang = $translate->getLang($text);
+        $lang = $this->translate->getLang($text);
 
         if($lang != 'en') {
-            $text = $translate->translate($text, 'en');
+            $text = $this->translate->translate($text, 'en');
         }
 
         $response = $this->http->post($this->apiUrl, [], [
