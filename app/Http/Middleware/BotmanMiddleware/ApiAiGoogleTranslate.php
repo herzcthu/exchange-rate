@@ -30,7 +30,8 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
         $lang = $this->translate->getLang($text);
 
         if($lang != 'en') {
-            $text = $this->translate->translate($text, 'en');
+            $translated = $this->translate->translate($text, 'en');
+            $text = $translated['text'];
         }
 
         $response = $this->http->post($this->apiUrl, [], [
