@@ -11,8 +11,8 @@
     "type": "project",
     "require": {
         "php": ">=7.0",
-        "botman/botman": "~2.0",
-        "botman/driver-facebook": "^1.1",
+        "botman/botman": "^2.4.1",
+        "botman/driver-facebook": "1.9.4",
         "botman/driver-web": "~1.0",
         "botman/studio-addons": "~1.0",
         "botman/tinker": "~1.0",
