@@ -128,6 +128,8 @@ class BotManController extends Controller
 
             $origin_lang = $this->translate->getLang($message);
 
+            $translated = '';
+
             if($lang != $origin_lang) {
                 $translated = $this->translate->translate($apireply, $origin_lang);
                 $apireply = $translated['text'];
