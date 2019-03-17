@@ -29,7 +29,7 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
         $text = $message->getText();
         $lang = $this->translate->getLang($text);
 
-        if($lang != 'en') {
+        if( !in_array($lang, ['en', 'my']) || (config('botman.config.translate') && $lang == 'my') ) {
             $translated = $this->translate->translate($text, 'en');
             $text = $translated['text'];
         }

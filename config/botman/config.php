@@ -18,4 +18,5 @@ return [
         'port' => env('REDIS_PORT', 6379),
         'password' => env('REDIS_PASSWORD', null)
     ],
+    'translate' => false,
 ];
