@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Conversations\ExampleConversation;
 use App\GoogleTranslate;
+use App\Http\Middleware\BotmanMiddleware\ApiAiGoogleTranslate;
 use App\Traits\ExBotTrait;
 use BotMan\BotMan\BotMan;
 use BotMan\Drivers\Facebook\Extensions\Element;
@@ -22,6 +23,8 @@ class BotManController extends Controller
     use ExBotTrait;
     private $botman;
 
+    protected $dialogFlowTranslate;
+
     private $banks_url = [];
 
     private $symbol = [
@@ -36,6 +39,8 @@ class BotManController extends Controller
     public function __construct()
     {
         $this->botman = app('botman-redis');
+        $this->dialogFlowTranslate = ApiAiGoogleTranslate::create(env('DIALOGFLOW_CLIENT_TOKEN'));
+        $this->botman->middleware->recieved($this->dialogFlowTranslate);
     }
 
     /**
@@ -110,17 +115,10 @@ class BotManController extends Controller
             agd, aya, cb, kbz, mcb');
         });
 
-        $botman->fallback(function($bot)  use ($translate)  {
+        $botman->fallback(function($bot)  {
             $message = $bot->getMessage()->getText();
-            $lang = $translate->getLang($message);
-
-            if($lang == 'my') {
-                $translated = $translate->translate($message, 'en');
-            } else {
-                $translated = $translate->translate($message, 'my');
-            }
-            $bot->reply($translated['text']);
-        });
+            $bot->reply($message);
+        })->middleware($this->dialogFlowTranslate);
 
         $botman->listen();
     }
