@@ -60,56 +60,13 @@ class BotManController extends Controller
 
         $botman->group(['driver' => WebDriver::class], function($botman) use ($crawlBank) {
 
-            $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->CurrencyResponseWeb($bot, $match, $crawlBank, false);
-
-            });
-
-            $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->CurrencyResponseWeb($bot, $match, $crawlBank, true);
-
-            });
-
-            $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->bankResponseWeb($bot, $match, $crawlBank);
-
-            });
-
-            $botman->hears('latest (agd|aya|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->bankResponseWeb($bot, $match, $crawlBank, true);
-            });
+            $this->processMsg($crawlBank, 'web');
 
         });
 
         $botman->group(['driver' => FacebookDriver::class], function($botman) use ($crawlBank) {
 
-            $botman->hears('^(usd|sgd|thb|eur|euro)$', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->currencyResponseFb($bot, $match, $crawlBank);
-
-            });
-
-            $botman->hears('^(agd|aya|cb|cbbank|mcb|kbz)$', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->bankResponseFb($bot, $match, $crawlBank);
-
-            });
-
-            $botman->hears('latest (usd|sgd|thb|eur|euro)', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->currencyResponseFb($bot, $match, $crawlBank);
-
-            });
-
-            $botman->hears('latest (agd|aya|cb|cbbank|mcb|kbz)', function (BotMan $bot, $match) use ($crawlBank) {
-
-                $this->bankResponseFb($bot, $match, $crawlBank);
-
-            });
+            $this->processMsg($crawlBank, 'facebook');
 
         });
 
@@ -125,33 +82,25 @@ class BotManController extends Controller
                 Log::info("Message =>");
                 Log::info($message);
             }
-            $extras = $bot->getMessage()->getExtras();
-
-            if (config('app.debug')) {
-                Log::info("Extras =>");
-                Log::info($extras);
-            }
-
-            $apireply = $extras['apiReply'];
-
-            $lang = $this->translate->getLang($apireply);
 
             $origin_lang = $this->translate->getLang($message);
 
             $translated = '';
 
-            if($lang != $origin_lang) {
-                $translated = $this->translate->translate($apireply, $origin_lang);
-                $apireply = $translated['text'];
+            $fallback_msg = 'Sorry I don\'t understand what you are saying. Something might wrong. Please contact Administrator.';
+
+            if($origin_lang != 'en') {
+                $translated = $this->translate->translate($fallback_msg, $origin_lang);
+                $fallback_msg = $translated['text'];
             }
 
-            $bot->reply($apireply);
+            $bot->reply($fallback_msg);
 
             if (config('app.debug')) {
                 Log::info("Translated =>");
                 Log::info($translated);
             }
-        });
+        })->middleware($this->dialogFlowTranslate);
 
 
         $botman->listen();
@@ -173,6 +122,60 @@ class BotManController extends Controller
     public function startConversation(BotMan $bot)
     {
         $bot->startConversation(new ExampleConversation());
+    }
+
+
+    private function processMsg(CrawlBank $crawlBank, $channel)
+    {
+        $botman = $this->botman;
+        $botman->hears('(.*)',function(BotMan $bot) use ($crawlBank, $channel) {
+            $message = $bot->getMessage()->getText();
+            if (config('app.debug')) {
+                Log::info("Message =>");
+                Log::info($message);
+            }
+            $extras = $bot->getMessage()->getExtras();
+
+            if (config('app.debug')) {
+                Log::info("Extras =>");
+                Log::info($extras);
+            }
+
+            $apireply = $extras['apiReply'];
+
+            $apiParameters = $extras['apiParameters'];
+
+            if(array_key_exists('currency-name', $apiParameters)) {
+                $currency = $apiParameters['currency-name'];
+                $this->CurrencyResponse($bot, $currency, $crawlBank, false, $channel);
+            }
+
+            if(array_key_exists('bank-name', $apiParameters)) {
+                $bank = $apiParameters['bank-name'];
+                $this->bankResponse($bot, $bank, $crawlBank, false, $channel);
+            }
+
+            if(!empty($apireply)) {
+                $lang = $this->translate->getLang($apireply);
+
+                $origin_lang = $this->translate->getLang($message);
+
+                $translated = '';
+
+                if($lang != $origin_lang) {
+                    $translated = $this->translate->translate($apireply, $origin_lang);
+                    $apireply = $translated['text'];
+                }
+
+                $bot->reply($apireply);
+
+                if (config('app.debug')) {
+                    Log::info("Translated =>");
+                    Log::info($translated);
+                }
+            }
+
+        })->middleware($this->dialogFlowTranslate);
     }
 
 }

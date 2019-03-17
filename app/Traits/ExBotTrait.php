@@ -27,6 +27,28 @@ trait ExBotTrait
         'MYR' => 'K',
     ];
 
+    public function currencyResponse(BotMan $bot, $match, CrawlBank $crawlBank, $nocache = false, $channel = 'web')
+    {
+        switch ($channel) {
+            case 'facebook':
+                $this->currencyResponseFb($bot, $match, $crawlBank, $nocache);
+                break;
+            default;
+                $this->currencyResponseWeb($bot, $match, $crawlBank, $nocache);
+        }
+    }
+
+    public function bankResponse(BotMan $bot, $match, CrawlBank $crawlBank, $nocache=false, $channel = 'web')
+    {
+        switch ($channel) {
+            case 'facebook':
+                $this->bankResponseFb($bot, $match, $crawlBank, $nocache);
+                break;
+            default;
+                $this->bankResponseWeb($bot, $match, $crawlBank, $nocache);
+        }
+    }
+
     private function currencyResponseWeb(BotMan $bot, $match, CrawlBank $crawlBank, $nocache = false) {
         $match = strtolower($match);
         switch ($match) {
