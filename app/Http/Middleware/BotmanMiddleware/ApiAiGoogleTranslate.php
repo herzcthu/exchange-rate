@@ -16,8 +16,9 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
      * @param  \BotMan\BotMan\Messages\Incoming\IncomingMessage $message
      * @return stdClass
      */
-    protected function getResponse(IncomingMessage $message, GoogleTranslate $translate)
+    protected function getResponse(IncomingMessage $message)
     {
+        $translate = new GoogleTranslate();
         $text = $message->getText();
         $lang = $translate->getLang($text);
 
