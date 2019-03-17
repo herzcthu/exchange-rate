@@ -7,6 +7,7 @@ use BotMan\BotMan\BotMan;
 use BotMan\BotMan\Interfaces\MiddlewareInterface;
 use BotMan\BotMan\Messages\Incoming\IncomingMessage;
 use BotMan\BotMan\Middleware\ApiAi;
+use Illuminate\Support\Facades\Log;
 
 class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
 {
@@ -26,6 +27,10 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
      */
     protected function getResponse(IncomingMessage $message)
     {
+        if (config('app.debug')) {
+            Log::info("Incoming Message =>");
+            Log::info($message);
+        }
         $text = $message->getText();
         $lang = $this->translate->getLang($text);
         $src_lang = 'en';

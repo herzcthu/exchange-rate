@@ -121,7 +121,17 @@ class BotManController extends Controller
 
         $botman->fallback(function(BotMan $bot)  {
             $message = $bot->getMessage()->getText();
+            if (config('app.debug')) {
+                Log::info("Message =>");
+                Log::info($message);
+            }
             $extras = $bot->getMessage()->getExtras();
+
+            if (config('app.debug')) {
+                Log::info("Extras =>");
+                Log::info($extras);
+            }
+
             $apireply = $extras['apiReply'];
 
             $lang = $this->translate->getLang($apireply);
@@ -138,8 +148,7 @@ class BotManController extends Controller
             $bot->reply($apireply);
 
             if (config('app.debug')) {
-                Log::info($extras);
-                Log::info($message);
+                Log::info("Translated =>");
                 Log::info($translated);
             }
         });
