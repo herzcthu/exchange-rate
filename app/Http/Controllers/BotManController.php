@@ -100,7 +100,7 @@ class BotManController extends Controller
                 Log::info("Translated =>");
                 Log::info($translated);
             }
-        })->middleware($this->dialogFlowTranslate);
+        });
 
 
         $botman->listen();
