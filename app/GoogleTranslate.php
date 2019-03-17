@@ -23,7 +23,7 @@ class GoogleTranslate
     }
 
     /**
-     * @return TranslateClient
+     * @return string
      */
     public function getLang($text)
     {

@@ -123,13 +123,13 @@ class BotManController extends Controller
             $message = $bot->getMessage()->getText();
             $extras = $bot->getMessage()->getExtras();
             $apireply = $extras['apiReply'];
+            
+            $origin_lang = $this->translate->getLang($message);
 
-            $lang = $this->translate->getLang($apireply);
+            $translated = $this->translate->translate($apireply, $origin_lang);
 
-            if($lang != 'my') {
-                $translated = $this->translate->translate($apireply, 'my');
-                $apireply = $translated['text'];
-            }
+            $apireply = $translated['text'];
+
             $bot->reply($apireply);
         });
 
