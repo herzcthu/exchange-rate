@@ -58,23 +58,27 @@ class BotManController extends Controller
             Log::info($request->all());
         }
 
-        $botman->group(['driver' => WebDriver::class], function($botman) use ($crawlBank) {
+        if(!empty($request->all())) {
 
-            $this->processMsg($botman, $crawlBank, 'web');
 
-        });
+            $botman->group(['driver' => WebDriver::class], function ($botman) use ($crawlBank) {
 
-        $botman->group(['driver' => FacebookDriver::class], function($botman) use ($crawlBank) {
+                $this->processMsg($botman, $crawlBank, 'web');
 
-            $this->processMsg($botman, $crawlBank, 'facebook');
+            });
 
-        });
+            $botman->group(['driver' => FacebookDriver::class], function ($botman) use ($crawlBank) {
 
-        $botman->hears('help|^\?$', function (BotMan $bot) {
-            $bot->reply('Available commands : 
+                $this->processMsg($botman, $crawlBank, 'facebook');
+
+            });
+
+            $botman->hears('help|^\?$', function (BotMan $bot) {
+                $bot->reply('Available commands : 
             usd, eur, euro, thb, sgd,
             agd, aya, cb, kbz, mcb');
-        });
+            });
+        }
 
         $botman->fallback(function(BotMan $bot)  {
             $message = $bot->getMessage()->getText();
@@ -82,8 +86,10 @@ class BotManController extends Controller
                 Log::info("Message =>");
                 Log::info($message);
             }
-
-            $origin_lang = $this->translate->getLang($message);
+            $origin_lang = 'en';
+            if(!empty($message)) {
+                $origin_lang = $this->translate->getLang($message);
+            }
 
             $translated = '';
 
