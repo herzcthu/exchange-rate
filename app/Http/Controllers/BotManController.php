@@ -78,10 +78,6 @@ class BotManController extends Controller
             usd, eur, euro, thb, sgd,
             agd, aya, cb, kbz, mcb');
             });
-
-            $botman->hears('hello testing from Facebook Team', function (BotMan $bot) {
-                $bot->reply('Hello there! Nice chatting.');
-            });
         }
 
         $botman->fallback(function(BotMan $bot)  {
