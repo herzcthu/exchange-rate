@@ -41,7 +41,7 @@ class ApiAiGoogleTranslate extends ApiAi implements MiddlewareInterface
         }
 
         if(!config('botman.config.translate') && $lang == 'my'){
-            $src_lang = 'hi'; // using Hindi lang code because DialogFlow do not support Burmese
+            $src_lang = 'en-IN'; // using english India lang code because DialogFlow do not support Burmese
         }
 
         $response = $this->http->post($this->apiUrl, [], [
