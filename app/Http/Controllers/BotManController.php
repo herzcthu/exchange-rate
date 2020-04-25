@@ -157,8 +157,8 @@ class BotManController extends Controller
                 }
             }
 
-            if(array_key_exists('bank-name', $apiParameters)) {
-                $bank = $apiParameters['bank-name'];
+            if(array_key_exists('bank', $apiParameters)) {
+                $bank = $apiParameters['bank'];
                 if(!empty($bank)) {
                     $this->bankResponse($bot, $bank, $crawlBank, false, $channel);
                 }

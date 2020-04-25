@@ -20,9 +20,11 @@
         "fideloper/proxy": "~3.3",
         "google/cloud-translate": "^1.2",
         "herzcthu/exchanges-rates-lib": "dev-master",
+        "jonnyw/php-phantomjs": "^4.6",
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0",
-        "mpociot/slack-client": "^0.3.0"
+        "mpociot/slack-client": "^0.3.0",
+        "predis/predis": "^1.1"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
@@ -53,11 +55,13 @@
         "post-install-cmd": [
             "Illuminate\\Foundation\\ComposerScripts::postInstall",
             "BotMan\\Studio\\Providers\\DriverServiceProvider::publishDriverConfigurations",
+            "PhantomInstaller\\Installer::installPhantomJS",
             "php artisan optimize"
         ],
         "post-update-cmd": [
             "Illuminate\\Foundation\\ComposerScripts::postUpdate",
             "BotMan\\Studio\\Providers\\DriverServiceProvider::publishDriverConfigurations",
+            "PhantomInstaller\\Installer::installPhantomJS",
             "php artisan optimize"
         ],
         "post-autoload-dump": [
